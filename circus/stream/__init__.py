@@ -115,20 +115,22 @@ class FancyStdoutStream(StdoutStream):
                 self.out.flush()
 
 
-def get_stream(conf):
+def get_stream(conf, reload=False):
     if not conf:
         return conf
 
     # we can have 'stream' or 'class' or 'filename'
-    if 'filename' in conf:
-        inst = FileStream(**conf)
-    elif 'stream' in conf:
-        inst = conf['stream']
-    elif 'class' in conf:
+    if 'class' in conf:
         class_name = conf.pop('class')
         if not "." in class_name:
-            class_name = "circus.stream.%s" % class_name
-        inst = resolve_name(class_name)(**conf)
+            cls = globals()[class_name]
+            inst = cls(**conf)
+        else:
+            inst = resolve_name(class_name, reload=reload)(**conf)
+    elif 'stream' in conf:
+        inst = conf['stream']
+    elif 'filename' in conf:
+        inst = FileStream(**conf)
     else:
         raise ValueError("stream configuration invalid")
 
